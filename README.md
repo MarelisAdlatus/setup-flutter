@@ -129,3 +129,7 @@ Both come with:
 ---
 
 ✅ After running these scripts, your system will be ready for **Flutter app development on Android, Web, and Desktop**.
+
+## License
+
+This project is licensed under the [Apache License 2.0](LICENSE).
