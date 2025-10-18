@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# ====== Nastavení ======
+# ====== Settings ======
 FLUTTER_VERSION="stable"
 FLUTTER_DIR="$HOME/flutter"
 ANDROID_SDK_DIR="$HOME/android"
@@ -29,54 +29,54 @@ get_sdkmanager_version() {
     fi
 }
 
-echo "==> Aktualizuji systémové balíčky..."
+echo "==> Updating system packages..."
 sudo apt update -y && sudo apt upgrade -y
 
-# ====== Instalace závislostí ======
-echo "==> Instalace nástrojů..."
+# ====== Installing dependencies ======
+echo "==> Installing tools..."
 sudo apt install -y git curl unzip xz-utils zip wget build-essential clang cmake ninja-build pkg-config \
     libgtk-3-dev liblzma-dev libstdc++6 openjdk-17-jdk mesa-utils
 
 # ====== Kontrola Git ======
 if ! command -v git &> /dev/null; then
-    echo "❌ Git není dostupný."
+    echo "❌ Git is not available."
     exit 1
 fi
 
-# ====== Kontrola JDK 17 ======
+# ====== Check JDK 17 ======
 JAVA_VER=$(java -version 2>&1 | head -n 1)
 if [[ "$JAVA_VER" =~ \"([0-9]+)\. ]]; then
     if [ "${BASH_REMATCH[1]}" -ne 17 ]; then
-        echo "❌ Nalezená verze Javy není 17: $JAVA_VER"
+        echo "❌ Java version found is not 17: $JAVA_VER"
         exit 1
     fi
 else
-    echo "❌ Nepodařilo se zjistit verzi Javy."
+    echo "❌ Java version could not be detected."
     exit 1
 fi
 
-# ====== Instalace Chromium ======
+# ====== Install Chromium ======
 if ! command -v chromium-browser &>/dev/null && ! command -v chromium &>/dev/null; then
-    echo "⚠️ Chromium není nainstalováno – instalace..."
+    echo "⚠️ Chromium not installed - Installing..."
     sudo apt install -y chromium-browser || sudo apt install -y chromium
 fi
 CHROME_PATH=$(command -v chromium-browser || command -v chromium)
 append_if_missing "CHROME_EXECUTABLE" "export CHROME_EXECUTABLE=\"$CHROME_PATH\""
 export CHROME_EXECUTABLE="$CHROME_PATH"
 
-# ====== Instalace / aktualizace Flutter ======
+# ====== Install / Update Flutter ======
 if [ ! -d "$FLUTTER_DIR/.git" ]; then
-    echo "==> Klonuji Flutter SDK..."
+    echo "==> Clone the Flutter SDK..."
     git clone https://github.com/flutter/flutter.git -b $FLUTTER_VERSION "$FLUTTER_DIR"
 else
-    echo "✅ Flutter existuje – aktualizace"
+    echo "✅ Flutter exists - update"
     git -C "$FLUTTER_DIR" fetch --all --prune
     git -C "$FLUTTER_DIR" reset --hard origin/$FLUTTER_VERSION
 fi
 append_if_missing "$FLUTTER_DIR/bin" "export PATH=\"\$PATH:$FLUTTER_DIR/bin\""
 export PATH="$PATH:$FLUTTER_DIR/bin"
 
-echo "==> Spouštím flutter upgrade..."
+echo "==> Running flutter upgrade..."
 "$FLUTTER_DIR/bin/flutter" upgrade
 
 # ====== Android SDK ======
@@ -86,12 +86,12 @@ SDK_VER=$(get_sdkmanager_version)
 MAJOR_VER=$(echo "$SDK_VER" | cut -d. -f1)
 
 if [ -z "$SDK_VER" ] || [ "$MAJOR_VER" -lt 12 ]; then
-    echo "==> Stahuji Android command-line tools..."
+    echo "==> Downloading Android command-line tools..."
     rm -rf "$ANDROID_SDK_DIR/cmdline-tools/latest"
     wget -O "$ANDROID_ZIP" "$SDK_URL"
     unzip -qo "$ANDROID_ZIP" -d "$ANDROID_SDK_DIR/cmdline-tools"
     mv "$ANDROID_SDK_DIR/cmdline-tools/cmdline-tools" "$ANDROID_SDK_DIR/cmdline-tools/latest"
-    echo "✅ Android command-line tools aktualizovány."
+    echo "✅ Android command-line tools updated."
 fi
 
 append_if_missing "ANDROID_HOME" "export ANDROID_HOME=$ANDROID_SDK_DIR"
@@ -99,29 +99,29 @@ append_if_missing "\$ANDROID_HOME/cmdline-tools/latest/bin" "export PATH=\$PATH:
 export ANDROID_HOME=$ANDROID_SDK_DIR
 export PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator"
 
-# ====== Přijetí SDK licencí ======
-echo "==> Přijímám Android SDK licence..."
+# ====== Accepting SDK licenses ======
+echo "==> I accept Android SDK licenses..."
 yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses
 
-# ====== Instalace build-tools a system-images pro API 36 i 34 ======
-echo "==> Instalace platform-build-tools a system-images..."
+# ====== Installation of build-tools and system-images for API 36 and 34 ======
+echo "==> Installing platform-build-tools and system-images..."
 sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-36" "build-tools;36.0.0" "emulator" "system-images;android-36;google_apis;x86_64"
 sdkmanager --sdk_root=$ANDROID_HOME "platforms;android-34" "build-tools;34.0.0" "system-images;android-34;google_apis;x86_64"
 
-# ====== Instalace NDK ======
-echo "==> Instalace Android NDK 27.0.12077973..."
+# ====== NDK installation ======
+echo "==> Installing Android NDK 27.0.12077973..."
 sdkmanager --sdk_root=$ANDROID_HOME "ndk;27.0.12077973"
 
-# ====== Vytvoření AVD ======
+# ====== Creating an AVD ======
 AVDMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager"
 
 create_avd() {
     local NAME="$1"
     local IMG="$2"
     if $AVDMANAGER list avd | grep -q "^ *Name: $NAME"; then
-        echo "⚠️ Emulátor '$NAME' již existuje, přeskočeno."
+        echo "⚠️ Emulator '$NAME' already exists, skipped."
     else
-        echo "==> Vytvářím emulátor '$NAME'..."
+        echo "==> Creating emulator '$NAME'..."
         echo "no" | $AVDMANAGER create avd -n "$NAME" -k "$IMG" --device "pixel"
     fi
 }
@@ -129,35 +129,35 @@ create_avd() {
 create_avd "Pixel_API_36" "system-images;android-36;google_apis;x86_64"
 create_avd "Pixel_API_34" "system-images;android-34;google_apis;x86_64"
 
-# ====== Funkce pro úpravu config.ini AVD ======
+# ====== Function to edit AVD's config.ini ======
 set_avd_config() {
     local avd_name="$1"
-    declare -A params=("${!2}")  # asociativní pole s parametry
+    declare -A params=("${!2}")  # associative array with parameters
 
     local cfg="$HOME/.android/avd/$avd_name.avd/config.ini"
     [ ! -f "$cfg" ] && return
 
     for key in "${!params[@]}"; do
         if grep -q "^$key=" "$cfg"; then
-            # existující řádek nahradíme
+            # we will replace the existing line
             sed -i "s|^$key=.*|$key=${params[$key]}|" "$cfg"
         else
-            # pokud neexistuje, přidáme na konec
+            # if it doesn't exist, we add it to the end
             echo "$key=${params[$key]}" >> "$cfg"
         fi
     done
 }
 
-# ====== Použití pro oba emulátory ======
+# ====== Usage for both emulators ======
 
-# Příklad nastavení více parametrů pro AVD:
-# Každý klíč je parametr v config.ini a hodnota je nastavená hodnota
-# Můžeš přidat libovolné další parametry podle potřeby
+# Example of setting multiple parameters for AVD:
+# Each key is a parameter in config.ini and the value is a set value
+# You can add any additional parameters as needed
 # declare -A avd_params=(
-#     ["hw.keyboard"]="yes"      # povolit hardwarovou klávesnici
-#     ["hw.ramSize"]="4096"      # velikost RAM v MB
-#     ["skin.name"]="pixel_5"    # skin emulátoru
-#     ["hw.gpu.enabled"]="yes"   # povolit GPU akceleraci
+# ["hw.keyboard"]="yes" # enable hardware keyboard
+# ["hw.ramSize"]="4096" # RAM size in MB
+# ["skin.name"]="pixel_5" # emulator skin
+# ["hw.gpu.enabled"]="yes" # enable GPU acceleration
 # )
 
 declare -A avd_params=( ["hw.keyboard"]="yes" )
@@ -165,21 +165,21 @@ declare -A avd_params=( ["hw.keyboard"]="yes" )
 set_avd_config "Pixel_API_36" avd_params[@]
 set_avd_config "Pixel_API_34" avd_params[@]
 
-# ====== Nastavení Flutteru ======
-echo "==> Nastavuji Flutter na Android SDK..."
+# ====== Flutter settings ======
+echo "==> I'm setting up Flutter on the Android SDK..."
 flutter config --android-sdk $ANDROID_HOME
 
-# ====== Nastavení JDK 17 jako výchozí ======
+# ====== Setting JDK 17 as default ======
 sudo update-alternatives --install /usr/bin/java java /usr/lib/jvm/java-17-openjdk-amd64/bin/java 1
 sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
 
-echo "==> Spouštím flutter doctor..."
+echo "==> Running flutter doctor..."
 flutter doctor
 
-echo "==> Stahuji další SDK pro Android, Web, Linux..."
+echo "==> Downloading more SDKs for Android, Web, Linux..."
 flutter precache --android --web --linux
 
 echo
-echo "✅ Instalace dokončena!"
-echo "Otevři nový terminál nebo spusť: source ~/.bashrc"
-echo "📱 Emulátory Pixel_API_36 a Pixel_API_34 jsou připraveny."
+echo "✅ Installation complete!"
+echo "Open a new terminal or run: source ~/.bashrc"
+echo "📱 Pixel_API_36 and Pixel_API_34 emulators are ready."

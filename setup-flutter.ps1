@@ -1,7 +1,7 @@
 ﻿Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# ====== Nastavení ======
+# ====== Settings ======
 $FLUTTER_VERSION = "stable"
 $FLUTTER_DIR = "$env:USERPROFILE\flutter"
 $ANDROID_SDK_DIR = "$env:USERPROFILE\android"
@@ -9,15 +9,15 @@ $ANDROID_ZIP = "$env:TEMP\android_cmdtools_latest.zip"
 $SDK_URL = "https://dl.google.com/android/repository/commandlinetools-win-11076708_latest.zip"
 $SDK_VERSION_FILE = "$ANDROID_SDK_DIR\cmdline-tools\latest\source.properties"
 
-# ====== Kontrola Git ======
-Write-Host "==> Kontroluji přítomnost Git..." -ForegroundColor Cyan
+# ====== Check Git ======
+Write-Host "==> Checking Git for presence..." -ForegroundColor Cyan
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    Write-Host "❌ Git není nainstalován. Instalace Flutteru zrušena." -ForegroundColor Red
+    Write-Host "❌ Git is not installed. Flutter installation cancelled." -ForegroundColor Red
     exit 1
 }
 
-# ====== Kontrola JDK 17 ======
-Write-Host "==> Kontroluji přítomnost JDK 17..." -ForegroundColor Cyan
+# ====== Check JDK 17 ======
+Write-Host "==> Checking for JDK 17 presence..." -ForegroundColor Cyan
 $javaOk = $false
 try {
     $javaOutput = & java -version 2>&1
@@ -34,33 +34,33 @@ if (-not $javaOk) {
     }
 }
 if (-not $javaOk) {
-    Write-Host "❌ JDK 17 není nainstalováno nebo není výchozí." -ForegroundColor Red
+    Write-Host "❌ JDK 17 is not installed or is not the default." -ForegroundColor Red
     exit 1
 }
 
-# ====== Kontrola Google Chrome ======
-Write-Host "==> Kontroluji Google Chrome..." -ForegroundColor Cyan
+# ====== Check Google Chrome ======
+Write-Host "==> Checking Google Chrome..." -ForegroundColor Cyan
 $chromePath = @(
     "C:\Program Files\Google\Chrome\Application\chrome.exe",
     "$env:ProgramFiles(x86)\Google\Chrome\Application\chrome.exe"
 ) | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $chromePath) {
-    Write-Host "❌ Google Chrome není nainstalován. Instalace Flutteru zrušena." -ForegroundColor Red
+    Write-Host "❌ Google Chrome is not installed. Flutter installation cancelled." -ForegroundColor Red
     exit 1
 }
 
-# ====== Instalace / Aktualizace Flutter ======
+# ====== Install / Update Flutter ======
 if (-Not (Test-Path "$FLUTTER_DIR\.git")) {
-    Write-Host "==> Klonuji Flutter SDK ($FLUTTER_VERSION) z GitHubu..." -ForegroundColor Cyan
+    Write-Host "==> Clone the Flutter SDK ($FLUTTER_VERSION) from GitHub..." -ForegroundColor Cyan
     git clone -b $FLUTTER_VERSION https://github.com/flutter/flutter.git $FLUTTER_DIR
 } else {
-    Write-Host "✅ Flutter již existuje – provádím bezpečnou aktualizaci na origin/$FLUTTER_VERSION" -ForegroundColor Yellow
+    Write-Host "✅ Flutter already exists - I'm doing a safe update to origin/$FLUTTER_VERSION" -ForegroundColor Yellow
     Push-Location $FLUTTER_DIR
     git fetch --all --prune
     git reset --hard origin/$FLUTTER_VERSION
     Pop-Location
 }
-Write-Host "==> Spouštím flutter upgrade..." -ForegroundColor Cyan
+Write-Host "==> Running flutter upgrade..." -ForegroundColor Cyan
 & "$FLUTTER_DIR\bin\flutter.bat" upgrade
 
 # ====== Android SDK ======
@@ -94,15 +94,15 @@ if ($existingVersion) {
 }
 
 if ($shouldDownload) {
-    Write-Host "==> Stahuji nejnovější Android command-line tools..." -ForegroundColor Cyan
+    Write-Host "==> Downloading the latest Android command-line tools..." -ForegroundColor Cyan
     Invoke-WebRequest $SDK_URL -OutFile $ANDROID_ZIP | Out-Null
     if (Test-Path "$ANDROID_SDK_DIR\cmdline-tools\latest") { Remove-Item "$ANDROID_SDK_DIR\cmdline-tools\latest" -Recurse -Force }
     Expand-Archive $ANDROID_ZIP -DestinationPath "$ANDROID_SDK_DIR\cmdline-tools"
     Rename-Item "$ANDROID_SDK_DIR\cmdline-tools\cmdline-tools" "latest"
-    Write-Host "✅ Android command-line tools aktualizovány." -ForegroundColor Green
+    Write-Host "✅ Android command-line tools updated." -ForegroundColor Green
 }
 
-# ====== Nastavení proměnných PATH ======
+# ====== Setting PATH variables ======
 $currentPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
 $newPaths = @(
     "$FLUTTER_DIR\bin",
@@ -115,12 +115,12 @@ foreach ($p in $newPaths) { if ($currentPath -notlike "*$p*") { $currentPath += 
 foreach ($p in $newPaths) { if ($env:Path -notlike "*$p*") { $env:Path += ";$p" } }
 [System.Environment]::SetEnvironmentVariable("ANDROID_HOME", $ANDROID_SDK_DIR, "User")
 
-# ====== Přijetí SDK licencí ======
-Write-Host "==> Přijímám Android SDK licence..." -ForegroundColor Cyan
+# ====== Acceptance of SDK licenses ======
+Write-Host "==> I accept Android SDK licenses..." -ForegroundColor Cyan
 "y`n" * 20 | & "$ANDROID_SDK_DIR\cmdline-tools\latest\bin\sdkmanager" --sdk_root=$ANDROID_SDK_DIR --licenses
 
-# ====== Instalace build-tools, platforem, emulátorů pro API 34 i 36 ======
-Write-Host "==> Instalace build-tools a systémových obrazů pro API 34 a 36..." -ForegroundColor Cyan
+# ====== Installation of build-tools, platforms, emulators for API 34 and 36 ======
+Write-Host "==> Installing build-tools and system images for API 34 and 36..." -ForegroundColor Cyan
 
 # API 36
 & "$ANDROID_SDK_DIR\cmdline-tools\latest\bin\sdkmanager.bat" --sdk_root=$ANDROID_SDK_DIR `
@@ -130,27 +130,27 @@ Write-Host "==> Instalace build-tools a systémových obrazů pro API 34 a 36...
 & "$ANDROID_SDK_DIR\cmdline-tools\latest\bin\sdkmanager.bat" --sdk_root=$ANDROID_SDK_DIR `
     "platforms;android-34" "build-tools;34.0.0" "system-images;android-34;google_apis;x86_64"
 
-# ====== Instalace NDK ======
-Write-Host "==> Instalace Android NDK 27.0.12077973..." -ForegroundColor Cyan
+# ====== Installation of NDK ======
+Write-Host "==> Installing Android NDK 27.0.12077973..." -ForegroundColor Cyan
 & "$ANDROID_SDK_DIR\cmdline-tools\latest\bin\sdkmanager.bat" --sdk_root=$ANDROID_SDK_DIR "ndk;27.0.12077973"
 
-# ====== Vytvoření výchozích AVD ======
+# ====== Creating default AVDs ======
 $avdManager = "$ANDROID_SDK_DIR\cmdline-tools\latest\bin\avdmanager.bat"
 
-# Emulátor API 36
+# API 36 Emulator
 $avdName36 = "Pixel_5_API_36"
 $avdList = & $avdManager list avd 2>&1
 if ($avdList -notmatch $avdName36) {
     & $avdManager create avd -n $avdName36 -k "system-images;android-36;google_apis;x86_64" --device "pixel_5"
 }
 
-# Emulátor API 34
+# API 34 Emulator
 $avdName34 = "Pixel_5_API_34"
 if ($avdList -notmatch $avdName34) {
     & $avdManager create avd -n $avdName34 -k "system-images;android-34;google_apis;x86_64" --device "pixel_5"
 }
 
-# ====== Funkce pro úpravu config.ini AVD ======
+# ====== Function to edit AVD's config.ini ======
 function Set-AvdConfigValues($avdName, $params) {
     $configPath = "$env:USERPROFILE\.android\avd\$avdName.avd\config.ini"
     if (-not (Test-Path $configPath)) { return }
@@ -172,33 +172,33 @@ function Set-AvdConfigValues($avdName, $params) {
     Set-Content $configPath $lines
 }
 
-# ====== Nastavení parametrů AVD ======
-# Příklad nastavení více parametrů pro AVD v PowerShellu:
-# Klíče jsou názvy parametrů v config.ini, hodnoty jsou nastavené hodnoty
-# Můžeš libovolně rozšířit o další položky
+# ====== Setting AVD parameters ======
+# Example of setting multiple parameters for AVD in PowerShell:
+# Keys are parameter names in config.ini, values ​​are set values
+# You can freely expand with other items
 # $params = @{
-#     "hw.keyboard" = "yes"       # povolit hardwarovou klávesnici
-#     "hw.ramSize"  = "4096"      # velikost RAM v MB
-#     "skin.name"   = "pixel_5"   # skin emulátoru
-#     "hw.gpu.enabled" = "yes"    # povolit GPU akceleraci
+# "hw.keyboard" = "yes" # enable hardware keyboard
+# "hw.ramSize" = "4096" # RAM size in MB
+# "skin.name" = "pixel_5" # emulator skin
+# "hw.gpu.enabled" = "yes" # enable GPU acceleration
 # }
 
 $params = @{ "hw.keyboard" = "yes" }
 
-# Použití pro oba emulátory
+# Use for both emulators
 Set-AvdConfigValues $avdName36 $params
 Set-AvdConfigValues $avdName34 $params
 
-# ====== Konfigurace Flutteru ======
-Write-Host "==> Nastavuji Flutter na Android SDK..." -ForegroundColor Cyan
+# ====== Configuring Flutter ======
+Write-Host "==> Setting up Flutter on Android SDK..." -ForegroundColor Cyan
 & "$FLUTTER_DIR\bin\flutter.bat" config --android-sdk $ANDROID_SDK_DIR
 
-# ====== Flutter doctor a precache ======
-Write-Host "==> Spouštím flutter doctor..." -ForegroundColor Cyan
+# ====== Flutter doctor and precache ======
+Write-Host "==> Running flutter doctor..." -ForegroundColor Cyan
 & "$FLUTTER_DIR\bin\flutter.bat" doctor
 
-Write-Host "==> Stahuji volitelné SDK (Android, Web, Windows)..." -ForegroundColor Cyan
+Write-Host "==> Downloading the optional SDK (Android, Web, Windows)..." -ForegroundColor Cyan
 & "$FLUTTER_DIR\bin\flutter.bat" precache --android --web --windows
 
-Write-Host "`n✅ Instalace dokončena! Otevři nový PowerShell pro načtení nového PATH." -ForegroundColor Green
-Write-Host "📱 Emulátory Pixel_5_API_36 a Pixel_5_API_34 jsou připraveny." -ForegroundColor Yellow
+Write-Host "`n✅ Installation complete! Open a new PowerShell to load the new PATH." -ForegroundColor Green
+Write-Host "📱 Pixel_5_API_36 and Pixel_5_API_34 emulators are ready." -ForegroundColor Yellow

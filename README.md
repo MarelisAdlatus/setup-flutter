@@ -6,12 +6,14 @@ They handle dependencies, environment variables, SDK downloads, emulator creatio
 ---
 
 ## 📂 Scripts
+
 - **Linux (Bash):** `setup-flutter.sh`
 - **Windows (PowerShell):** `setup-flutter.ps1`
 
 ---
 
 ## 🚀 Features
+
 - Installs and updates **Flutter SDK** (`stable` branch).
 - Installs and configures **Android SDK + command-line tools**.
 - Ensures **JDK 17** is available and set as default.
@@ -33,14 +35,17 @@ They handle dependencies, environment variables, SDK downloads, emulator creatio
 ## 📋 Requirements
 
 ### Linux
+
 - Ubuntu/Debian-based distro
 - `sudo` privileges
 - Internet connection
 
 The script installs required packages automatically:
+
 - `git`, `curl`, `unzip`, `wget`, `build-essential`, `openjdk-17-jdk`, `chromium`, and more.
 
 ### Windows
+
 - PowerShell 5+ (recommended: PowerShell 7+)
 - Git installed and available in `PATH`
 - JDK 17 installed (e.g., Eclipse Adoptium)
@@ -51,6 +56,7 @@ The script installs required packages automatically:
 ## ⚡ Usage
 
 ### Linux
+
 ```bash
 chmod +x setup-flutter.sh
 ./setup-flutter.sh
@@ -103,25 +109,23 @@ flutter emulators --launch Pixel_API_36
 
 ## ⚠️ Notes
 
-* The script **resets Flutter SDK** to the latest `stable` branch.
-* Existing AVDs with the same names are skipped (not overwritten).
-* On Linux, if Chromium is not installed, it will be added automatically.
-* On Windows, if Chrome or JDK 17 are missing, the script **aborts**.
+- The script **resets Flutter SDK** to the latest `stable` branch.
+- Existing AVDs with the same names are skipped (not overwritten).
+- On Linux, if Chromium is not installed, it will be added automatically.
+- On Windows, if Chrome or JDK 17 are missing, the script **aborts**.
 
 ---
 
 ## 📱 Ready-to-Use Emulators
 
-* Pixel API 36 (Android 14+)
-* Pixel API 34 (Android 14)
+- Pixel API 36 (Android 14+)
+- Pixel API 34 (Android 14)
 
 Both come with:
 
-* Google APIs
-* Hardware keyboard enabled by default
+- Google APIs
+- Hardware keyboard enabled by default
 
 ---
 
 ✅ After running these scripts, your system will be ready for **Flutter app development on Android, Web, and Desktop**.
-
-```
