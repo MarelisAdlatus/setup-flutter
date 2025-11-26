@@ -126,8 +126,11 @@ sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-36" "bui
 sdkmanager --sdk_root=$ANDROID_HOME "platforms;android-34" "build-tools;34.0.0" "system-images;android-34;google_apis;x86_64"
 
 # ====== NDK installation ======
-echo "==> Installing Android NDK 27.0.12077973..."
-sdkmanager --sdk_root=$ANDROID_HOME "ndk;27.0.12077973"
+echo "==> Detecting latest Android NDK version..."
+NDK=$(sdkmanager --list | grep "ndk;" | sed -E 's/.*ndk;([0-9\.]+).*/\1/' | sort -Vr | head -n 1)
+
+echo "==> Installing Android NDK $NDK..."
+sdkmanager --sdk_root=$ANDROID_HOME "ndk;$NDK"
 
 # ====== Creating an AVD ======
 AVDMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager"

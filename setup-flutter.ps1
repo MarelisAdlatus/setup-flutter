@@ -147,8 +147,17 @@ Write-Host "==> Installing build-tools and system images for API 34 and 36..." -
     "platforms;android-34" "build-tools;34.0.0" "system-images;android-34;google_apis;x86_64"
 
 # ====== Installation of NDK ======
-Write-Host "==> Installing Android NDK 27.0.12077973..." -ForegroundColor Cyan
-& "$ANDROID_SDK_DIR\cmdline-tools\latest\bin\sdkmanager.bat" --sdk_root=$ANDROID_SDK_DIR "ndk;27.0.12077973"
+Write-Host "==> Detecting latest Android NDK version..." -ForegroundColor Cyan
+
+$latestNdk = (& "$ANDROID_SDK_DIR\cmdline-tools\latest\bin\sdkmanager.bat" --list 2>$null |
+    Select-String "ndk;" |
+    ForEach-Object { ($_ -replace '.*ndk;([0-9\.]+).*', '$1') } |
+    Sort-Object -Descending |
+    Select-Object -First 1)
+
+Write-Host "==> Installing Android NDK $latestNdk..." -ForegroundColor Cyan
+& "$ANDROID_SDK_DIR\cmdline-tools\latest\bin\sdkmanager.bat" --sdk_root=$ANDROID_SDK_DIR "ndk;$latestNdk"
+
 
 # ====== Creating default AVDs ======
 $avdManager = "$ANDROID_SDK_DIR\cmdline-tools\latest\bin\avdmanager.bat"
