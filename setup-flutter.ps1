@@ -22,7 +22,8 @@ $FLUTTER_VERSION = "stable"
 $FLUTTER_DIR = "$env:USERPROFILE\flutter"
 $ANDROID_SDK_DIR = "$env:USERPROFILE\android"
 $ANDROID_ZIP = "$env:TEMP\android_cmdtools_latest.zip"
-$SDK_URL = "https://dl.google.com/android/repository/commandlinetools-win-11076708_latest.zip"
+$CMDLINE_TOOLS_BUILD = "11076708"
+$SDK_URL = "https://dl.google.com/android/repository/commandlinetools-win-$CMDLINE_TOOLS_BUILD`_latest.zip"
 $SDK_VERSION_FILE = "$ANDROID_SDK_DIR\cmdline-tools\latest\source.properties"
 
 # ====== Check Git ======
@@ -175,6 +176,26 @@ if ($avdList -notmatch $avdName34) {
     & $avdManager create avd -n $avdName34 -k "system-images;android-34;google_apis;x86_64" --device "pixel_5"
 }
 
+# ====== Tablet AVDs ======
+
+# 7" tablet (Generic)
+$avdTab7 = "Tablet_7_API_36"
+if ($avdList -notmatch $avdTab7) {
+    & $avdManager create avd `
+        -n $avdTab7 `
+        -k "system-images;android-36;google_apis;x86_64" `
+        --device "7in WSVGA (Tablet)"
+}
+
+# 10.1" tablet (Generic)
+$avdTab10 = "Tablet_10_API_36"
+if ($avdList -notmatch $avdTab10) {
+    & $avdManager create avd `
+        -n $avdTab10 `
+        -k "system-images;android-36;google_apis;x86_64" `
+        --device "10.1in WXGA (Tablet)"
+}
+
 # ====== Function to edit AVD's config.ini ======
 function Set-AvdConfigValues($avdName, $params) {
     $configPath = "$env:USERPROFILE\.android\avd\$avdName.avd\config.ini"
@@ -208,11 +229,19 @@ function Set-AvdConfigValues($avdName, $params) {
 # "hw.gpu.enabled" = "yes" # enable GPU acceleration
 # }
 
-$params = @{ "hw.keyboard" = "yes" }
+# Common AVD hardware settings
+$params = @{
+    "hw.keyboard"    = "yes"   # Enable host keyboard input
+    "hw.ramSize"     = "4096"  # RAM in MB (recommended for tablets)
+    "hw.gpu.enabled" = "yes"   # Enable GPU acceleration
+    "hw.gpu.mode"    = "auto"  # Auto-select GPU backend
+}
 
-# Use for both emulators
+# Apply settings
 Set-AvdConfigValues $avdName36 $params
 Set-AvdConfigValues $avdName34 $params
+Set-AvdConfigValues $avdTab7  $params
+Set-AvdConfigValues $avdTab10 $params
 
 # ====== Configuring Flutter ======
 Write-Host "==> Setting up Flutter on Android SDK..." -ForegroundColor Cyan
@@ -226,4 +255,4 @@ Write-Host "==> Downloading the optional SDK (Android, Web, Windows)..." -Foregr
 & "$FLUTTER_DIR\bin\flutter.bat" precache --android --web --windows
 
 Write-Host "`n✅ Installation complete! Open a new PowerShell to load the new PATH." -ForegroundColor Green
-Write-Host "📱 Pixel_5_API_36 and Pixel_5_API_34 emulators are ready." -ForegroundColor Yellow
+Write-Host "📱 Pixel and Tablet emulators are ready." -ForegroundColor Yellow

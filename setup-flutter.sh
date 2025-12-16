@@ -23,7 +23,8 @@ FLUTTER_VERSION="stable"
 FLUTTER_DIR="$HOME/flutter"
 ANDROID_SDK_DIR="$HOME/android"
 ANDROID_ZIP="/tmp/android_cmdtools_latest.zip"
-SDK_URL="https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+CMDLINE_TOOLS_VER="11076708"
+SDK_URL="https://dl.google.com/android/repository/commandlinetools-linux-${CMDLINE_TOOLS_VER}_latest.zip"
 SDK_VERSION_FILE="$ANDROID_SDK_DIR/cmdline-tools/latest/source.properties"
 BASHRC="$HOME/.bashrc"
 
@@ -31,10 +32,10 @@ append_if_missing() {
     local KEY="$1"
     local VALUE="$2"
     if grep -q "$KEY" "$BASHRC"; then
-        echo "ℹ️ Položka '$KEY' již existuje v $BASHRC – přeskočeno."
+        echo "ℹ️ Entry '$KEY' already exists in $BASHRC – skipped."
     else
         echo "$VALUE" >> "$BASHRC"
-        echo "✅ Přidána položka '$KEY' do $BASHRC"
+        echo "✅ Entry '$KEY' added to $BASHRC"
     fi
 }
 
@@ -138,31 +139,42 @@ AVDMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager"
 create_avd() {
     local NAME="$1"
     local IMG="$2"
+    local DEVICE="$3"
+
     if $AVDMANAGER list avd | grep -q "^ *Name: $NAME"; then
         echo "⚠️ Emulator '$NAME' already exists, skipped."
     else
         echo "==> Creating emulator '$NAME'..."
-        echo "no" | $AVDMANAGER create avd -n "$NAME" -k "$IMG" --device "pixel"
+        echo "no" | $AVDMANAGER create avd \
+            -n "$NAME" \
+            -k "$IMG" \
+            --device "$DEVICE"
     fi
 }
 
-create_avd "Pixel_API_36" "system-images;android-36;google_apis;x86_64"
-create_avd "Pixel_API_34" "system-images;android-34;google_apis;x86_64"
+create_avd "Pixel_API_36" "system-images;android-36;google_apis;x86_64" "pixel"
+create_avd "Pixel_API_34" "system-images;android-34;google_apis;x86_64" "pixel"
+
+# ====== Tablet AVDs ======
+
+# 7" tablet (Generic)
+create_avd "Tablet_7_API_36" "system-images;android-36;google_apis;x86_64" "7in WSVGA (Tablet)"
+
+# 10.1" tablet (Generic)
+create_avd "Tablet_10_API_36" "system-images;android-36;google_apis;x86_64" "10.1in WXGA (Tablet)"
 
 # ====== Function to edit AVD's config.ini ======
 set_avd_config() {
     local avd_name="$1"
-    declare -A params=("${!2}")  # associative array with parameters
+    local -n params="$2"
 
     local cfg="$HOME/.android/avd/$avd_name.avd/config.ini"
     [ ! -f "$cfg" ] && return
 
     for key in "${!params[@]}"; do
         if grep -q "^$key=" "$cfg"; then
-            # we will replace the existing line
             sed -i "s|^$key=.*|$key=${params[$key]}|" "$cfg"
         else
-            # if it doesn't exist, we add it to the end
             echo "$key=${params[$key]}" >> "$cfg"
         fi
     done
@@ -180,10 +192,18 @@ set_avd_config() {
 # ["hw.gpu.enabled"]="yes" # enable GPU acceleration
 # )
 
-declare -A avd_params=( ["hw.keyboard"]="yes" )
+# Common AVD hardware settings
+declare -A avd_params=(
+  ["hw.keyboard"]="yes"     # Enable host keyboard
+  ["hw.ramSize"]="4096"     # RAM in MB
+  ["hw.gpu.enabled"]="yes"  # Enable GPU acceleration
+  ["hw.gpu.mode"]="auto"    # Auto GPU backend
+)
 
 set_avd_config "Pixel_API_36" avd_params[@]
 set_avd_config "Pixel_API_34" avd_params[@]
+set_avd_config "Tablet_7_API_36"  avd_params[@]
+set_avd_config "Tablet_10_API_36" avd_params[@]
 
 # ====== Flutter settings ======
 echo "==> I'm setting up Flutter on the Android SDK..."
@@ -202,4 +222,4 @@ flutter precache --android --web --linux
 echo
 echo "✅ Installation complete!"
 echo "Open a new terminal or run: source ~/.bashrc"
-echo "📱 Pixel_API_36 and Pixel_API_34 emulators are ready."
+echo "📱 Pixel and Tablet emulators are ready."
