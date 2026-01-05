@@ -46,6 +46,8 @@ The script installs required packages automatically:
 - Git installed and available in `PATH`
 - JDK 17 installed (e.g., Eclipse Adoptium)
 - Google Chrome installed
+- Visual Studio with the “Desktop development with C++” workload installed  
+  (download from https://visualstudio.microsoft.com/downloads)
 
 ## ⚡ Usage
 
