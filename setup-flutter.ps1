@@ -19,8 +19,9 @@ $ErrorActionPreference = "Stop"
 
 # ====== Settings ======
 $FLUTTER_VERSION = "stable"
-$FLUTTER_DIR = "$env:USERPROFILE\flutter"
-$ANDROID_SDK_DIR = "$env:USERPROFILE\android"
+$BASE_DIR = "C:\"
+$FLUTTER_DIR = "$BASE_DIR\Flutter"
+$ANDROID_SDK_DIR = "$BASE_DIR\Android"
 $ANDROID_ZIP = "$env:TEMP\android_cmdtools_latest.zip"
 $CMDLINE_TOOLS_BUILD = "11076708"
 $SDK_URL = "https://dl.google.com/android/repository/commandlinetools-win-$CMDLINE_TOOLS_BUILD`_latest.zip"
@@ -131,6 +132,7 @@ foreach ($p in $newPaths) { if ($currentPath -notlike "*$p*") { $currentPath += 
 [System.Environment]::SetEnvironmentVariable("Path", $currentPath, "User")
 foreach ($p in $newPaths) { if ($env:Path -notlike "*$p*") { $env:Path += ";$p" } }
 [System.Environment]::SetEnvironmentVariable("ANDROID_HOME", $ANDROID_SDK_DIR, "User")
+[System.Environment]::SetEnvironmentVariable("ANDROID_SDK_ROOT", $ANDROID_SDK_DIR, "User")
 
 # ====== Acceptance of SDK licenses ======
 Write-Host "==> I accept Android SDK licenses..." -ForegroundColor Cyan

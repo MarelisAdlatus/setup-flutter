@@ -113,8 +113,10 @@ if [ -z "$SDK_VER" ] || [ "$MAJOR_VER" -lt 12 ]; then
 fi
 
 append_if_missing "ANDROID_HOME" "export ANDROID_HOME=$ANDROID_SDK_DIR"
+append_if_missing "ANDROID_SDK_ROOT" "export ANDROID_SDK_ROOT=$ANDROID_SDK_DIR"
 append_if_missing "\$ANDROID_HOME/cmdline-tools/latest/bin" "export PATH=\$PATH:\$ANDROID_HOME/cmdline-tools/latest/bin:\$ANDROID_HOME/platform-tools:\$ANDROID_HOME/emulator"
 export ANDROID_HOME=$ANDROID_SDK_DIR
+export ANDROID_SDK_ROOT=$ANDROID_SDK_DIR
 export PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator"
 
 # ====== Accepting SDK licenses ======
