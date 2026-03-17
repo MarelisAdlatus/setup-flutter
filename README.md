@@ -1,155 +1,185 @@
 # Flutter Setup Scripts
 
-This repository contains **automated setup scripts** for installing and configuring Flutter and the Android SDK on **Linux (Ubuntu/Debian)** and **Windows (PowerShell)**.  
-They handle dependencies, environment variables, SDK downloads, emulator creation, and Flutter configuration.
+This repository contains two setup scripts for preparing a Flutter development environment with Android SDK tooling and a predefined Android emulator set:
 
-## 📂 Scripts
+- `setup-flutter.sh` for Linux (Ubuntu/Debian-based systems)
+- `setup-flutter.ps1` for Windows (PowerShell)
 
-- **Linux (Bash):** `setup-flutter.sh`
-- **Windows (PowerShell):** `setup-flutter.ps1`
+The scripts are intended to bootstrap a repeatable local environment for Flutter development on Android, Web, and desktop.
 
-## 🚀 Features
+## What the scripts do
 
-- Installs and updates **Flutter SDK** (`stable` branch).
-- Installs and configures **Android SDK + command-line tools**.
-- Ensures **JDK 17** is available and set as default.
-- Adds required **PATH environment variables** automatically.
-- Accepts Android SDK licenses.
-- Installs:
-  - Platform tools, build-tools, emulator
-  - API levels **34** and **36** (including system images with Google APIs)
-  - **NDK 27.0.12077973**
-- Creates ready-to-use **Android emulators**:
-  - `Pixel_API_36` (Linux)
-  - `Pixel_API_34` (Linux)
-  - `Pixel_5_API_36` (Windows)
-  - `Pixel_5_API_34` (Windows)
-- Provides full support for **Android tablets**  
-  (tablet AVDs can be created using the same installed system images).
-- Runs `flutter doctor` and `flutter precache` to prepare SDKs (Android, Web, Desktop).
+Both scripts:
 
-## 📋 Requirements
+- install or update Flutter from the `stable` branch
+- install Android command-line tools build `14742923`
+- configure Android SDK paths and Flutter Android SDK integration
+- accept Android SDK licenses
+- install:
+  - `platform-tools`
+  - `emulator`
+  - Android platforms `34`, `35`, and `36`
+  - build-tools `34.0.0`, `35.0.0`, and `36.0.0`
+  - Google APIs x86_64 system images for API 34, 35, and 36
+- detect and install the latest available Android NDK
+- maintain a managed AVD set
+- apply common AVD configuration:
+  - hardware keyboard enabled
+  - 4096 MB RAM
+  - GPU enabled
+  - GPU mode `auto`
+- run `flutter doctor`
+- run `flutter precache`
 
-### Linux
+## Managed emulator set
 
-- Ubuntu/Debian-based distro
+The scripts keep the following emulator names under management:
+
+- `Pixel_5_API_36`
+- `Pixel_5_API_35`
+- `Pixel_5_API_34`
+- `Pixel_9_API_36`
+- `Pixel_9_API_35`
+- `Pixel_9_API_34`
+- `Tablet_7_API_36`
+- `Tablet_7_API_35`
+- `Tablet_7_API_34`
+- `Tablet_10_API_36`
+- `Tablet_10_API_35`
+- `Tablet_10_API_34`
+
+Behavior of the managed set:
+
+- existing managed AVDs are kept
+- missing managed AVDs are created
+- unmanaged AVDs are removed
+- if an exact hardware profile is unavailable, the scripts may use a supported fallback device profile
+
+## Linux script
+
+Script: `setup-flutter.sh`
+
+### Linux-specific behavior
+
+The Bash script:
+
+- updates system packages with `apt`
+- installs required packages automatically, including:
+  - `git`
+  - `curl`
+  - `unzip`
+  - `xz-utils`
+  - `zip`
+  - `wget`
+  - `build-essential`
+  - `clang`
+  - `cmake`
+  - `ninja-build`
+  - `pkg-config`
+  - `libgtk-3-dev`
+  - `liblzma-dev`
+  - `libstdc++6`
+  - `openjdk-17-jdk`
+  - `mesa-utils`
+- installs Chromium automatically if it is missing
+- writes environment variables to `~/.bashrc`
+- uses:
+  - `FLUTTER_DIR="$HOME/flutter"`
+  - `ANDROID_SDK_DIR="$HOME/android"`
+- moves conflicting SDK backup directories such as `platform-tools.backup`, `platform-tools.old`, and `platform-tools.bak` out of the SDK root
+- sets Java 17 through `update-alternatives` when the expected binary is present
+- precaches Flutter artifacts for `--android --web --linux`
+
+### Linux requirements
+
+- Ubuntu or Debian-based distribution
 - `sudo` privileges
-- Internet connection
+- internet connection
 
-The script installs required packages automatically:
-
-- `git`, `curl`, `unzip`, `wget`, `build-essential`, `openjdk-17-jdk`, `chromium`, and more.
-
-### Windows
-
-- PowerShell 5+ (recommended: PowerShell 7+)
-- Git installed and available in `PATH`
-- JDK 17 installed (e.g., Eclipse Adoptium)
-- Google Chrome installed
-- Visual Studio with the “Desktop development with C++” workload installed  
-  (download from https://visualstudio.microsoft.com/downloads)
-
-## ⚡ Usage
-
-### Linux
+### Linux usage
 
 ```bash
 chmod +x setup-flutter.sh
 ./setup-flutter.sh
-````
+```
 
-After completion:
+After the script finishes:
 
 ```bash
 source ~/.bashrc
 ```
 
-### Windows
+## Windows script
 
-Run in **PowerShell (as user)**:
+Script: `setup-flutter.ps1`
+
+### Windows-specific behavior
+
+The PowerShell script:
+
+- requires Git to be available in `PATH`
+- checks for JDK 17 and aborts if it is missing
+- checks for Google Chrome and aborts if it is missing
+- sets user environment variables for:
+  - Flutter `bin`
+  - Android `cmdline-tools\latest\bin`
+  - `platform-tools`
+  - `emulator`
+  - `ANDROID_HOME`
+  - `ANDROID_SDK_ROOT`
+- uses:
+  - `FLUTTER_DIR="C:\Flutter"`
+  - `ANDROID_SDK_DIR="C:\Android"`
+- moves `C:\Android\platform-tools.backup` to `C:\Android-Backups` to avoid duplicate package warnings
+- runs `flutter doctor` with UTF-8 console output handling
+- precaches Flutter artifacts for `--android --web --windows`
+
+### Windows requirements
+
+- Windows 11
+- PowerShell 5 or newer
+- Git installed and available in `PATH`
+- JDK 17 installed
+- Google Chrome installed
+- Visual Studio with desktop C++ support for Windows desktop Flutter development
+- internet connection
+
+### Windows usage
+
+Run in PowerShell:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\setup-flutter.ps1
 ```
 
-Then restart PowerShell to load updated environment variables.
+After the script finishes, open a new PowerShell session.
 
-## 🧪 Verification
+## Verification
 
-After running the script, verify the setup with:
+After running the script, verify the environment:
 
 ```bash
 flutter doctor
-```
-
-Expected: no major issues reported.
-
-To list created emulators:
-
-```bash
 flutter emulators
-```
-
-To start one:
-
-```bash
-flutter emulators --launch Pixel_API_36
-```
-
-(Windows: replace with `Pixel_5_API_36`)
-
-## ⚠️ Notes
-
-* The script **resets Flutter SDK** to the latest `stable` branch.
-* Existing AVDs with the same names are skipped (not overwritten).
-* On Linux, if Chromium is not installed, it will be added automatically.
-* On Windows, if Chrome or JDK 17 are missing, the script **aborts**.
-
-## 📱 Ready-to-Use Emulators (Phones)
-
-* Pixel API 36 (Android 14+)
-* Pixel API 34 (Android 14)
-
-Both come with:
-
-* Google APIs
-* Hardware keyboard enabled by default
-
-## 📱 Android Tablets Support
-
-This setup fully supports **Android tablet development**.
-
-Key points:
-
-* The scripts install **generic Google APIs system images**, usable for both phones and tablets.
-* Default emulators created by the scripts are **phone profiles** (Pixel / Pixel 5).
-* No additional SDK packages are required for tablets.
-
-### Creating a Tablet Emulator
-
-Recommended settings:
-
-* Hardware profile: **Tablet** (Pixel Tablet, Nexus 10, custom tablet)
-* API level: **34 or 36**
-* System image: **Google APIs**
-* Screen size: **10–13 inches**
-* Resolution: **2560×1600** or similar
-* RAM: **4096 MB or more**
-* Graphics: **Hardware / Automatic**
-* Hardware keyboard: optional
-
-### Physical Android Tablets
-
-* Enable **Developer options → USB debugging**.
-* Connect via USB or Wi-Fi debugging.
-* Verify detection:
-
-```bash
 flutter devices
 ```
 
-✅ After running these scripts, your system will be ready for **Flutter app development on Android phones, tablets, Web, and Desktop**.
+Example emulator launch:
+
+```bash
+flutter emulators --launch Pixel_9_API_36
+```
+
+## Notes
+
+- The Flutter checkout is reset to `origin/stable` during updates.
+- The scripts are designed for a clean, reproducible local setup rather than preserving arbitrary existing AVD collections.
+- The Android emulator system images are x86_64 Google APIs images for API 34, 35, and 36.
+- The NDK version is not hardcoded; the scripts install the latest version reported by `sdkmanager` at runtime.
+- Linux and Windows differ intentionally in dependency handling:
+  - Linux installs most prerequisites automatically.
+  - Windows validates required prerequisites and stops if key components are missing.
 
 ## License
 
