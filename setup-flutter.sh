@@ -215,6 +215,31 @@ set_avd_config() {
     done
 }
 
+# ====== Choose Operation Mode ======
+echo ""
+echo "What do you want to do?"
+echo "  1. Install Flutter, Android SDK, and configure environment (default)"
+echo "  2. Uninstall Flutter, Android SDK, and clean environment"
+read -p "Select option (1 or 2, default: 1): " choice
+choice=${choice:-1}
+
+if [[ "$choice" == "2" ]]; then
+    echo ""
+    echo "⚠️  UNINSTALL MODE"
+    echo "This will remove:"
+    echo "  - Flutter installation ($FLUTTER_DIR)"
+    echo "  - Android SDK ($ANDROID_SDK_DIR)"
+    echo "  - Managed Android Virtual Devices (AVD)"
+    echo "  - Environment setup in ~/.bashrc (only entries added by setup script)"
+    read -p "Are you sure? (yes/no, default: no): " confirm
+    if [[ "$confirm" != "yes" ]]; then
+        echo "Cancelled."
+        exit 0
+    fi
+fi
+
+if [[ "$choice" == "1" ]]; then
+
 echo "==> Updating system packages..."
 sudo apt update -y && sudo apt upgrade -y
 
@@ -402,3 +427,86 @@ for avd in "${DESIRED_AVDS[@]}"; do
         echo "   - $avd"
     fi
 done
+
+else
+    # ====== UNINSTALL MODE ======
+    echo ""
+    echo "==> Starting uninstallation..." 
+
+    # Remove Flutter directory
+    if [[ -d "$FLUTTER_DIR" ]]; then
+        echo "==> Removing Flutter installation: $FLUTTER_DIR"
+        rm -rf "$FLUTTER_DIR"
+        if [[ ! -d "$FLUTTER_DIR" ]]; then
+            echo "✅ Flutter removed."
+        else
+            echo "❌ Failed to remove Flutter directory. It may be in use."
+        fi
+    else
+        echo "ℹ️  Flutter not found at $FLUTTER_DIR"
+    fi
+
+    # Remove Android SDK directory
+    if [[ -d "$ANDROID_SDK_DIR" ]]; then
+        echo "==> Removing Android SDK: $ANDROID_SDK_DIR"
+        rm -rf "$ANDROID_SDK_DIR"
+        if [[ ! -d "$ANDROID_SDK_DIR" ]]; then
+            echo "✅ Android SDK removed."
+        else
+            echo "❌ Failed to remove Android SDK directory. It may be in use."
+        fi
+    else
+        echo "ℹ️  Android SDK not found at $ANDROID_SDK_DIR"
+    fi
+
+    # Remove managed AVDs
+    avd_root="$HOME/.android/avd"
+    if [[ -d "$avd_root" ]]; then
+        echo "==> Removing managed Android Virtual Devices..."
+        local_desired_avds=("Pixel_5_API_36" "Pixel_5_API_35" "Pixel_5_API_34" "Pixel_9_API_36" "Pixel_9_API_35" "Pixel_9_API_34" "Tablet_7_API_36" "Tablet_7_API_35" "Tablet_7_API_34" "Tablet_10_API_36" "Tablet_10_API_35" "Tablet_10_API_34")
+        for avd in "${local_desired_avds[@]}"; do
+            avd_dir="$avd_root/$avd"
+            avd_ini="$avd_root/${avd}.ini"
+            [[ -d "$avd_dir" ]] && rm -rf "$avd_dir" && echo "✅ Removed AVD: $avd"
+            [[ -f "$avd_ini" ]] && rm -f "$avd_ini"
+        done
+    fi
+
+    # Remove additional home folders and files introduced by setup (user request)
+    echo "==> Removing additional home directories and files (.android, .config/flutter, .dart-tool, android-sdk-backups, .flutter)..."
+    if [[ -d "$HOME/.android" ]]; then
+        rm -rf "$HOME/.android" && echo "✅ Removed $HOME/.android" || echo "❌ Failed to remove $HOME/.android"
+    fi
+    if [[ -d "$HOME/.config/flutter" ]]; then
+        rm -rf "$HOME/.config/flutter" && echo "✅ Removed $HOME/.config/flutter" || echo "❌ Failed to remove $HOME/.config/flutter"
+    fi
+    if [[ -d "$HOME/.dart-tool" ]]; then
+        rm -rf "$HOME/.dart-tool" && echo "✅ Removed $HOME/.dart-tool" || echo "❌ Failed to remove $HOME/.dart-tool"
+    fi
+    if [[ -d "$HOME/android-sdk-backups" ]]; then
+        rm -rf "$HOME/android-sdk-backups" && echo "✅ Removed $HOME/android-sdk-backups" || echo "❌ Failed to remove $HOME/android-sdk-backups"
+    fi
+    if [[ -f "$HOME/.flutter" ]]; then
+        rm -f "$HOME/.flutter" && echo "✅ Removed $HOME/.flutter" || echo "❌ Failed to remove $HOME/.flutter"
+    fi
+
+    # Remove from ~/.bashrc
+    echo "==> Cleaning up ~/.bashrc..."
+    if [[ -f "$BASHRC" ]]; then
+        sed -i '/CHROME_EXECUTABLE/d' "$BASHRC"
+        sed -i '/ANDROID_HOME/d' "$BASHRC"
+        sed -i '/ANDROID_SDK_ROOT/d' "$BASHRC"
+        sed -i '/PATH.*flutter/d' "$BASHRC"
+        sed -i '/PATH.*android/d' "$BASHRC"
+        echo "✅ ~/.bashrc cleaned."
+    fi
+
+    # Remove exported variables from current session
+    unset CHROME_EXECUTABLE
+    unset ANDROID_HOME
+    unset ANDROID_SDK_ROOT
+
+    echo ""
+    echo "✅ Uninstallation complete! Open a new terminal for changes to take effect."
+
+fi
