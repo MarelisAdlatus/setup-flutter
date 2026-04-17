@@ -17,6 +17,27 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+$scriptLogTimestamp = Get-Date -Format "yyyy.MM.dd_HH-mm-ss"
+$scriptLogPath = Join-Path -Path (Get-Location).Path -ChildPath ("{0}_windows_setup-flutter.log" -f $scriptLogTimestamp)
+$transcriptStarted = $false
+
+try {
+    Start-Transcript -Path $scriptLogPath -Force | Out-Null
+    $transcriptStarted = $true
+    Write-Host "==> Logging to: $scriptLogPath" -ForegroundColor DarkYellow
+}
+catch {
+    Write-Warning "Could not start transcript logging: $($_.Exception.Message)"
+}
+
+trap {
+    if ($transcriptStarted) {
+        Stop-Transcript | Out-Null
+        $transcriptStarted = $false
+    }
+    throw
+}
+
 # ====== Settings ======
 $FLUTTER_VERSION = "stable"
 $BASE_DIR = "C:\"
@@ -32,7 +53,7 @@ $CMDLINE_TOOLS_MARKER_FILE = "$ANDROID_SDK_DIR\cmdline-tools\latest\.marelis-bui
 Write-Host "==> Checking Git for presence..." -ForegroundColor Cyan
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
     Write-Host "❌ Git is not installed. Flutter installation cancelled." -ForegroundColor Red
-    exit 1
+    throw "Git is not installed."
 }
 
 # ====== Check JDK 17 ======
@@ -54,7 +75,7 @@ if (-not $javaOk) {
 }
 if (-not $javaOk) {
     Write-Host "❌ JDK 17 is not installed or is not the default." -ForegroundColor Red
-    exit 1
+    throw "JDK 17 is not installed or is not the default."
 }
 
 # ====== Check Google Chrome ======
@@ -65,7 +86,7 @@ $chromePath = @(
 ) | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $chromePath) {
     Write-Host "❌ Google Chrome is not installed. Flutter installation cancelled." -ForegroundColor Red
-    exit 1
+    throw "Google Chrome is not installed."
 }
 
 # ====== Install / Update Flutter ======
@@ -185,10 +206,13 @@ Write-Host "==> Installing build-tools and system images for API 34, 35 and 36..
 # ====== Installation of NDK ======
 Write-Host "==> Detecting latest Android NDK version..." -ForegroundColor Cyan
 
+
+# Číselné řazení NDK verzí (správně i pro víceciferné verze)
 $latestNdk = (& "$ANDROID_SDK_DIR\cmdline-tools\latest\bin\sdkmanager.bat" --list 2>$null |
     Select-String "ndk;" |
     ForEach-Object { ($_ -replace '.*ndk;([0-9\.]+).*', '$1') } |
-    Sort-Object -Descending |
+    Where-Object { $_ -match '^[0-9]+(\.[0-9]+)*$' } |
+    Sort-Object { [Version]$_ } -Descending |
     Select-Object -First 1)
 
 Write-Host "==> Installing Android NDK $latestNdk..." -ForegroundColor Cyan
@@ -304,7 +328,10 @@ $managedAvdNames = @(
 Remove-UnmanagedAvds -ManagedNames $managedAvdNames
 
 $pixel5Device = Resolve-AvdDevice -Label "Pixel 5" -Candidates @("pixel_5", "pixel")
-$pixel9Device = Resolve-AvdDevice -Label "Pixel 9 phone" -Candidates @("pixel_9", "pixel_9_pro", "pixel_9_pro_xl", "pixel_8_pro", "pixel_7_pro", "pixel_6_pro", "pixel_5", "pixel")
+$pixel9Device = Resolve-AvdDevice -Label "Pixel 9 phone" -Candidates @(
+    "pixel_9", "pixel_9_pro", "pixel_9_pro_xl", "pixel_8_pro", "pixel_7_pro", "pixel_6_pro", "pixel_xl", "pixel_5", "pixel"
+)
+# Kandidáti sjednoceni s Linux skriptem, fail-fast logika zachována
 $tablet7Device = Resolve-AvdDevice -Label '7" tablet' -Candidates @('7in WSVGA (Tablet)', '7in WSVGA', 'Medium Tablet')
 $tablet10Device = Resolve-AvdDevice -Label '10.1" tablet' -Candidates @('10.1in WXGA (Tablet)', '10.1in WXGA', 'Nexus 10')
 
@@ -348,7 +375,7 @@ function Set-AvdConfigValues($avdName, $params) {
         }
     }
 
-    Set-Content $configPath $lines
+    Set-Content $configPath $lines -Encoding UTF8
 }
 
 # ====== Setting AVD parameters ======
@@ -425,4 +452,8 @@ if ($managedExistingAvds) {
     $managedExistingAvds | ForEach-Object { Write-Host ("   - " + $_) -ForegroundColor Yellow }
 } else {
     Write-Host "⚠️ No managed emulators are currently present." -ForegroundColor Yellow
+}
+
+if ($transcriptStarted) {
+    Stop-Transcript | Out-Null
 }

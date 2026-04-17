@@ -18,6 +18,11 @@
 
 set -e
 
+LOG_TIMESTAMP="$(date +%Y.%m.%d_%H-%M-%S)"
+LOG_FILE="$PWD/${LOG_TIMESTAMP}_linux_setup-flutter.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+echo "==> Logging to: $LOG_FILE"
+
 # ====== Settings ======
 FLUTTER_VERSION="stable"
 FLUTTER_DIR="$HOME/flutter"
@@ -238,7 +243,7 @@ if ! command -v chromium-browser >/dev/null 2>&1 && ! command -v chromium >/dev/
     sudo apt install -y chromium-browser || sudo apt install -y chromium
 fi
 CHROME_PATH="$(command -v chromium-browser || command -v chromium)"
-append_if_missing "CHROME_EXECUTABLE" "export CHROME_EXECUTABLE="$CHROME_PATH""
+append_if_missing "CHROME_EXECUTABLE" "export CHROME_EXECUTABLE=\"\$CHROME_PATH\""
 export CHROME_EXECUTABLE="$CHROME_PATH"
 
 if [[ ! -d "$FLUTTER_DIR/.git" ]]; then
@@ -265,8 +270,8 @@ else
     echo "ℹ️  Android command-line tools build $CMDLINE_TOOLS_VER already installed."
 fi
 
-append_if_missing "ANDROID_HOME" "export ANDROID_HOME="$ANDROID_SDK_DIR""
-append_if_missing "ANDROID_SDK_ROOT" "export ANDROID_SDK_ROOT="$ANDROID_SDK_DIR""
+append_if_missing "ANDROID_HOME" "export ANDROID_HOME=\"\$ANDROID_SDK_DIR\""
+append_if_missing "ANDROID_SDK_ROOT" "export ANDROID_SDK_ROOT=\"\$ANDROID_SDK_DIR\""
 append_if_missing "cmdline-tools/latest/bin" "export PATH="\$PATH:\$ANDROID_HOME/cmdline-tools/latest/bin:\$ANDROID_HOME/platform-tools:\$ANDROID_HOME/emulator""
 export ANDROID_HOME="$ANDROID_SDK_DIR"
 export ANDROID_SDK_ROOT="$ANDROID_SDK_DIR"
