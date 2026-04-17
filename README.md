@@ -9,7 +9,19 @@ The scripts are intended to bootstrap a repeatable local environment for Flutter
 
 ## What the scripts do
 
-Both scripts:
+Both scripts start with an interactive mode selection:
+
+- `1` install/update (default)
+- `2` uninstall
+
+Each run also writes a log file to the current working directory:
+
+- Linux: `YYYY.MM.DD_HH-MM-SS_linux_setup-flutter.log`
+- Windows: `YYYY.MM.DD_HH-MM-SS_windows_setup-flutter.log`
+
+Install mode behavior:
+
+both scripts:
 
 - install or update Flutter from the `stable` branch
 - install Android command-line tools build `14742923`
@@ -30,6 +42,12 @@ Both scripts:
   - GPU mode `auto`
 - run `flutter doctor`
 - run `flutter precache`
+
+Uninstall mode behavior:
+
+- removes Flutter and Android SDK directories used by the scripts
+- removes managed AVD entries created/maintained by the scripts
+- removes environment configuration entries added by the scripts
 
 ## Managed emulator set
 
@@ -89,6 +107,12 @@ The Bash script:
 - moves conflicting SDK backup directories such as `platform-tools.backup`, `platform-tools.old`, and `platform-tools.bak` out of the SDK root
 - sets Java 17 through `update-alternatives` when the expected binary is present
 - precaches Flutter artifacts for `--android --web --linux`
+- in uninstall mode also removes additional user-scoped items when present:
+  - `~/.android`
+  - `~/.config/flutter`
+  - `~/.dart-tool`
+  - `~/android-sdk-backups`
+  - `~/.flutter`
 
 ### Linux requirements
 
@@ -133,6 +157,9 @@ The PowerShell script:
 - moves `C:\Android\platform-tools.backup` to `C:\Android-Backups` to avoid duplicate package warnings
 - runs `flutter doctor` with UTF-8 console output handling
 - precaches Flutter artifacts for `--android --web --windows`
+- in uninstall mode also removes:
+  - `C:\Android-Backups`
+  - `%USERPROFILE%\.android`
 
 ### Windows requirements
 
@@ -154,6 +181,8 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
 After the script finishes, open a new PowerShell session.
+
+When running uninstall on Windows, a restart can be required for complete cleanup if some SDK files are locked by running processes.
 
 ## Verification
 
