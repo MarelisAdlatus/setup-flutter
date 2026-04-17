@@ -89,7 +89,33 @@ if (-not $chromePath) {
     throw "Google Chrome is not installed."
 }
 
+# ====== Choose Operation Mode ======
+Write-Host ""
+Write-Host "What do you want to do?" -ForegroundColor Cyan
+Write-Host "  1. Install Flutter, Android SDK, and configure environment (default)"
+Write-Host "  2. Uninstall Flutter, Android SDK, and clean environment"
+$choice = Read-Host "Select option (1 or 2, default: 1)"
+if ([string]::IsNullOrWhiteSpace($choice)) { $choice = "1" }
+
+if ($choice -eq "2") {
+    Write-Host ""
+    Write-Host "⚠️  UNINSTALL MODE" -ForegroundColor Yellow
+    Write-Host "This will remove:" -ForegroundColor Yellow
+    Write-Host "  - Flutter installation ($FLUTTER_DIR)" -ForegroundColor Yellow
+    Write-Host "  - Android SDK ($ANDROID_SDK_DIR)" -ForegroundColor Yellow
+    Write-Host "  - Managed Android Virtual Devices (AVD)" -ForegroundColor Yellow
+    Write-Host "  - Environment PATH and ANDROID_* variables (only those added by setup script)" -ForegroundColor Yellow
+    $confirm = Read-Host "Are you sure? (yes/no, default: no)"
+    if ($confirm -ne "yes") {
+        Write-Host "Cancelled." -ForegroundColor Yellow
+        exit 0
+    }
+} else {
+    $choice = "1"
+}
+
 # ====== Install / Update Flutter ======
+if ($choice -eq "1") {
 if (-Not (Test-Path "$FLUTTER_DIR\.git")) {
     Write-Host "==> Clone the Flutter SDK ($FLUTTER_VERSION) from GitHub..." -ForegroundColor Cyan
     git clone -b $FLUTTER_VERSION https://github.com/flutter/flutter.git $FLUTTER_DIR
@@ -452,6 +478,106 @@ if ($managedExistingAvds) {
     $managedExistingAvds | ForEach-Object { Write-Host ("   - " + $_) -ForegroundColor Yellow }
 } else {
     Write-Host "⚠️ No managed emulators are currently present." -ForegroundColor Yellow
+}
+
+} else {
+    # ====== UNINSTALL MODE ======
+    Write-Host ""
+    Write-Host "==> Starting uninstallation..." -ForegroundColor Yellow
+
+    # Remove Flutter directory
+    if (Test-Path $FLUTTER_DIR) {
+        Write-Host "==> Removing Flutter installation: $FLUTTER_DIR" -ForegroundColor Cyan
+        Remove-Item -Path $FLUTTER_DIR -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+        if (Test-Path $FLUTTER_DIR) {
+            Write-Host "❌ Failed to remove Flutter directory. It may be in use." -ForegroundColor Red
+        } else {
+            Write-Host "✅ Flutter removed." -ForegroundColor Green
+        }
+    } else {
+        Write-Host "ℹ️ Flutter not found at $FLUTTER_DIR" -ForegroundColor DarkYellow
+    }
+
+    # Remove Android SDK directory
+    if (Test-Path $ANDROID_SDK_DIR) {
+        Write-Host "==> Removing Android SDK: $ANDROID_SDK_DIR" -ForegroundColor Cyan
+        Remove-Item -Path $ANDROID_SDK_DIR -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+        if (Test-Path $ANDROID_SDK_DIR) {
+            Write-Host "❌ Failed to remove Android SDK directory. It may be in use." -ForegroundColor Red
+        } else {
+            Write-Host "✅ Android SDK removed." -ForegroundColor Green
+        }
+    } else {
+        Write-Host "ℹ️ Android SDK not found at $ANDROID_SDK_DIR" -ForegroundColor DarkYellow
+    }
+
+    # Remove Android backups directory if present
+    $androidBackups = "C:\Android-Backups"
+    if (Test-Path $androidBackups) {
+        Write-Host "==> Removing Android backups: $androidBackups" -ForegroundColor Cyan
+        Remove-Item -Path $androidBackups -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+        if (Test-Path $androidBackups) {
+            Write-Host "❌ Failed to remove Android backups. It may be in use." -ForegroundColor Red
+        } else {
+            Write-Host "✅ Android backups removed." -ForegroundColor Green
+        }
+    }
+
+    # Remove managed AVDs
+    $avdRoot = Join-Path $env:USERPROFILE ".android\avd"
+    if (Test-Path $avdRoot) {
+        Write-Host "==> Removing managed Android Virtual Devices..." -ForegroundColor Cyan
+        $managedAvds = @("Pixel_9", "Pixel_9_Fold", "Pixel_Tablet")
+        foreach ($avd in $managedAvds) {
+            $avdDir = Join-Path $avdRoot $avd
+            $avdIni = Join-Path $avdRoot "${avd}.ini"
+            if (Test-Path $avdDir) {
+                Remove-Item -Path $avdDir -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+                Write-Host "✅ Removed AVD: $avd" -ForegroundColor Green
+            }
+            if (Test-Path $avdIni) {
+                Remove-Item -Path $avdIni -Force -ErrorAction SilentlyContinue | Out-Null
+            }
+        }
+    }
+
+    # Remove user .android folder (after managed AVD removal)
+    $userDotAndroid = Join-Path $env:USERPROFILE ".android"
+    if (Test-Path $userDotAndroid) {
+        Write-Host "==> Removing user .android folder: $userDotAndroid" -ForegroundColor Cyan
+        Remove-Item -Path $userDotAndroid -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+        if (Test-Path $userDotAndroid) {
+            Write-Host "❌ Failed to remove $userDotAndroid. It may be in use." -ForegroundColor Red
+        } else {
+            Write-Host "✅ Removed $userDotAndroid." -ForegroundColor Green
+        }
+    }
+
+    # Remove from PATH
+    Write-Host "==> Cleaning up PATH..." -ForegroundColor Cyan
+    $currentPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
+    $pathsToRemove = @(
+        "$FLUTTER_DIR\bin",
+        "$ANDROID_SDK_DIR\cmdline-tools\latest\bin",
+        "$ANDROID_SDK_DIR\platform-tools",
+        "$ANDROID_SDK_DIR\emulator"
+    )
+    foreach ($p in $pathsToRemove) {
+            if ($currentPath -like "*$p*") {
+                $currentPath = $currentPath -replace [regex]::Escape("$p;"), "" -replace [regex]::Escape(";$p"), ""
+        }
+    }
+    [System.Environment]::SetEnvironmentVariable("Path", $currentPath, "User")
+    Write-Host "✅ PATH cleaned." -ForegroundColor Green
+
+    # Remove environment variables
+    Write-Host "==> Removing environment variables..." -ForegroundColor Cyan
+    [System.Environment]::SetEnvironmentVariable("ANDROID_HOME", $null, "User")
+    [System.Environment]::SetEnvironmentVariable("ANDROID_SDK_ROOT", $null, "User")
+    Write-Host "✅ Environment variables removed." -ForegroundColor Green
+
+    Write-Host ""
+    Write-Host "✅ Uninstallation complete! Open a new PowerShell for changes to take effect." -ForegroundColor Green
 }
 
 if ($transcriptStarted) {
