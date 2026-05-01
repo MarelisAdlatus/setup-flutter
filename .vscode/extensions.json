@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "dart-code.dart-code",
+    "dart-code.flutter",
+    "mads-hartmann.bash-ide-vscode",
+    "davidanson.vscode-markdownlint"
+  ]
+}

@@ -1,6 +1,12 @@
+# Lokální AI a agentní metadata pro veřejný repozitář
 .ai/
 .codex/
-.github/
-.vscode/
 AGENTS.md
+.github/copilot-instructions.md
+
+# VS Code: ve veřejném repozitáři verzovat jen doporučená rozšíření
+.vscode/*
+!.vscode/extensions.json
+
+# Lokální logy
 *.log
