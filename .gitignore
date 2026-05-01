@@ -2,3 +2,5 @@
 .codex/
 .github/
 .vscode/
+AGENTS.md
+*.log
