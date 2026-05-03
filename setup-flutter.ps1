@@ -116,9 +116,11 @@ if ($choice -eq "2") {
 
 # ====== Install / Update Flutter ======
 if ($choice -eq "1") {
+$flutterWasCloned = $false
 if (-Not (Test-Path "$FLUTTER_DIR\.git")) {
     Write-Host "==> Clone the Flutter SDK ($FLUTTER_VERSION) from GitHub..." -ForegroundColor Cyan
     git clone -b $FLUTTER_VERSION https://github.com/flutter/flutter.git $FLUTTER_DIR
+    $flutterWasCloned = $true
 } else {
     Write-Host "✅ Flutter already exists - I'm doing a safe update to origin/$FLUTTER_VERSION" -ForegroundColor Yellow
     Push-Location $FLUTTER_DIR
@@ -126,8 +128,12 @@ if (-Not (Test-Path "$FLUTTER_DIR\.git")) {
     git reset --hard origin/$FLUTTER_VERSION
     Pop-Location
 }
-Write-Host "==> Running flutter upgrade..." -ForegroundColor Cyan
-& "$FLUTTER_DIR\bin\flutter.bat" upgrade
+if ($flutterWasCloned) {
+    Write-Host "==> Fresh Flutter clone detected - skipping flutter upgrade." -ForegroundColor Yellow
+} else {
+    Write-Host "==> Running flutter upgrade..." -ForegroundColor Cyan
+    & "$FLUTTER_DIR\bin\flutter.bat" upgrade
+}
 
 # ====== Android SDK ======
 New-Item -ItemType Directory -Force -Path "$ANDROID_SDK_DIR\cmdline-tools" | Out-Null

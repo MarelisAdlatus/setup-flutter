@@ -24,6 +24,7 @@ Install mode behavior:
 both scripts:
 
 - install or update Flutter from the `stable` branch
+- skip `flutter upgrade` immediately after a fresh clone; run it only when updating an existing Flutter checkout
 - install Android command-line tools build `14742923`
 - configure Android SDK paths and Flutter Android SDK integration
 - accept Android SDK licenses

@@ -271,9 +271,11 @@ CHROME_PATH="$(command -v chromium-browser || command -v chromium)"
 append_if_missing "CHROME_EXECUTABLE" "export CHROME_EXECUTABLE=\"\$CHROME_PATH\""
 export CHROME_EXECUTABLE="$CHROME_PATH"
 
+flutter_was_cloned=0
 if [[ ! -d "$FLUTTER_DIR/.git" ]]; then
     echo "==> Clone the Flutter SDK..."
     git clone https://github.com/flutter/flutter.git -b "$FLUTTER_VERSION" "$FLUTTER_DIR"
+    flutter_was_cloned=1
 else
     echo "✅ Flutter exists - safe update to origin/$FLUTTER_VERSION"
     git -C "$FLUTTER_DIR" fetch --all --prune
@@ -282,8 +284,12 @@ fi
 append_if_missing "$FLUTTER_DIR/bin" "export PATH="\$PATH:$FLUTTER_DIR/bin""
 export PATH="$PATH:$FLUTTER_DIR/bin"
 
-echo "==> Running flutter upgrade..."
-"$FLUTTER_DIR/bin/flutter" upgrade
+if [[ "$flutter_was_cloned" -eq 1 ]]; then
+    echo "==> Fresh Flutter clone detected - skipping flutter upgrade."
+else
+    echo "==> Running flutter upgrade..."
+    "$FLUTTER_DIR/bin/flutter" upgrade
+fi
 
 mkdir -p "$ANDROID_SDK_DIR/cmdline-tools"
 clean_sdk_conflicts
