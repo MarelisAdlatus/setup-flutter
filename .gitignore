@@ -2,6 +2,7 @@
 .ai/
 .codex/
 AGENTS.md
+AGENTS.local.md
 .github/copilot-instructions.md
 
 # VS Code: only keep recommended extensions versioned in the public repository
