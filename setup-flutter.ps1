@@ -239,7 +239,7 @@ Write-Host "==> Installing build-tools and system images for API 34, 35 and 36..
 Write-Host "==> Detecting latest Android NDK version..." -ForegroundColor Cyan
 
 
-# Číselné řazení NDK verzí (správně i pro víceciferné verze)
+# Numeric sorting of NDK versions (correct even for multi-digit segments)
 $latestNdk = (& "$ANDROID_SDK_DIR\cmdline-tools\latest\bin\sdkmanager.bat" --list 2>$null |
     Select-String "ndk;" |
     ForEach-Object { ($_ -replace '.*ndk;([0-9\.]+).*', '$1') } |
@@ -363,7 +363,7 @@ $pixel5Device = Resolve-AvdDevice -Label "Pixel 5" -Candidates @("pixel_5", "pix
 $pixel9Device = Resolve-AvdDevice -Label "Pixel 9 phone" -Candidates @(
     "pixel_9", "pixel_9_pro", "pixel_9_pro_xl", "pixel_8_pro", "pixel_7_pro", "pixel_6_pro", "pixel_xl", "pixel_5", "pixel"
 )
-# Kandidáti sjednoceni s Linux skriptem, fail-fast logika zachována
+# Candidates aligned with the Linux script while keeping fail-fast behavior
 $tablet7Device = Resolve-AvdDevice -Label '7" tablet' -Candidates @('7in WSVGA (Tablet)', '7in WSVGA', 'Medium Tablet')
 $tablet10Device = Resolve-AvdDevice -Label '10.1" tablet' -Candidates @('10.1in WXGA (Tablet)', '10.1in WXGA', 'Nexus 10')
 
