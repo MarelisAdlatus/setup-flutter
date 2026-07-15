@@ -1,13 +1,32 @@
-# Local AI and agent metadata for the public repository
+.DS_Store
+Thumbs.db
+desktop.ini
+
+*.tmp
+*.bak
+*.old
+*.log
+*.zip
+*.7z
+*.rar
+out/
+dist/
+tmp/
+temp/
+
+*.transcript.txt
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Local AI and agent metadata for this public repository
 .ai/
 .codex/
 AGENTS.md
-AGENTS.local.md
 .github/copilot-instructions.md
 
-# VS Code: only keep recommended extensions versioned in the public repository
-.vscode/*
-!.vscode/extensions.json
-
-# Local logs
-*.log
+AGENTS.local.md
+.env
+.env.*
+!.env.example

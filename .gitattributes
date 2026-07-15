@@ -1,14 +1,31 @@
-* text=auto eol=lf
+* text=auto
 
 *.ps1 text eol=crlf
-*.bat text eol=crlf
-*.cmd text eol=crlf
+*.psm1 text eol=crlf
+*.psd1 text eol=crlf
+*.md text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.txt text eol=lf
+*.editorconfig text eol=lf
+*.gitattributes text eol=lf
+*.gitignore text eol=lf
 
+*.zip binary
+*.7z binary
+*.rar binary
 *.png binary
 *.jpg binary
 *.jpeg binary
 *.gif binary
 *.webp binary
-*.zip binary
-*.jar binary
-*.keystore binary
+*.ico binary
+*.pdf binary
+*.doc binary
+*.docx binary
+*.xls binary
+*.xlsx binary
+*.ppt binary
+*.pptx binary
